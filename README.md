@@ -4,6 +4,16 @@ A standalone electronic instrument and groove workstation. Open it, arm the engi
 
 This is not a DAW and not a generic production dashboard. It is one playable machine: pattern sequencers, hands-on knobs, mixer, effects, transport, record, save, export.
 
+## Screens
+
+Boot: **Arm Engine**, then **Play**. Factory groove is already a song.
+
+![Boot screen](docs/ladescreen.png)
+
+The instrument. SPEED at 140, scenes A01–B08, drums, bass, synth, mix.
+
+![AILEXSI SoundStation](docs/station.png)
+
 ## Run locally
 
 ```bash
