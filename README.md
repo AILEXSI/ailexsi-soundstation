@@ -20,21 +20,44 @@ npm run build
 
 ## Play
 
-A factory groove in A minor is already programmed on pattern **A01** for drums, bass, and synth.
+A progressive psytrance set in A minor is already programmed. **A01 Night Drive** is the factory groove — four-on-the-floor kick, rolling 16th offbeat bass, offbeat open hats — at **140 BPM**.
 
 | Do this | How |
 | --- | --- |
 | Start / stop | **Play** or Space |
 | Reset to step 1 | **Reset** or Esc |
 | Tap tempo | **Tap** or T |
-| Tempo | BPM knob, or `[` `]` (±1, Shift ±5) |
+| Tempo | SPEED deck: drag the 120–150 slider, tap a preset (128 / 138 / 140 / 142 / 145), type a BPM, or `[` `]` (±1, Shift ±5). The clock follows `SET_TEMPO` immediately. |
 | Program drums | Click a pad. Shift-click for accent. Voice buttons preview the hit. |
 | Program bass / synth | Click a step to toggle. Drag a lit step vertically to change pitch. Shift = accent. Alt = slide. |
-| Switch patterns | A01–B08 on each instrument. Live changes wait for the next step, beat, or bar (Performance quantize). |
+| Switch patterns | Scene buttons ride drums + bass + synth together. Each instrument still has A01–B08. Live changes wait for the next step, beat, or bar (Performance quantize). |
 | Perform | Mute groups, Open / Crush / Space / Drop macros, master filter sweep, delay, hall, drive. |
 | Mixer / FX | Volume, pan, mute, solo, meters, delay/reverb sends, distortion target, compressor. |
 
 Every knob and every step changes the sound or the sequence. There are no decorative controls.
+
+### Pattern set
+
+Bank A is a progressive ride. Bank B is a set of DJ tools on the same key.
+
+| Slot | Name | Role |
+| --- | --- | --- |
+| A01 | Night Drive | Factory groove — full pump, play this first |
+| A02 | Dawn Gate | Intro — kick + offbeat bass, almost no hats |
+| A03 | Roll In | Groove building — 8th hats, rolling line |
+| A04 | Lift | Energy — 16th hats, clap on 2 and 4, gallop bass |
+| A05 | Peak Sun | Peak — extra perc, octave bass, stabbing synth |
+| A06 | Void Break | Break — kick out, air and ticks |
+| A07 | Second Sun | Second peak — modal bass, tribal perc |
+| A08 | Afterglow | Ride-out — hypnotic close |
+| B01 | Kick Bed | Kick + offbeat 8th bass |
+| B02 | Hat Bed | 16th hat bed + root roll |
+| B03 | Gallop | Gallop bass, sparse kit |
+| B04 | Walk Down | Descending A–G–F–E pump |
+| B05 | Fifths | A/E fifth pump |
+| B06 | Acid Run | Slides and 16th synth run |
+| B07 | Tribal | Perc-led groove |
+| B08 | Air Cut | Breakdown air |
 
 ## Record
 
@@ -48,7 +71,7 @@ If recording fails (autoplay, mute, or a silent take), the status line says so. 
 - **Reload** opens the last saved session.
 - **File** downloads `*.soundstation.json`.
 - **Open** loads a downloaded project.
-- **New** starts a fresh factory groove.
+- **New** starts a fresh Night Drive factory set at 140 BPM. A previously saved browser session still reopens as it was.
 
 Audio takes are stored in IndexedDB so a refresh can restore the last take with the project.
 
@@ -69,7 +92,7 @@ The file is 16-bit stereo PCM. MP3 is not bundled; WAV is the archival format.
 | Esc | Reset |
 | R | Record |
 | T | Tap tempo |
-| [ ] | Tempo |
+| [ ] | Tempo ±1 · Shift ±5 |
 | 1–8 | Drums A01–A08 |
 | Shift+1–8 | Bass patterns |
 | Alt+1–8 | Synth patterns |

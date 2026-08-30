@@ -173,6 +173,18 @@ export function reduce(input: Project, command: Command): Project {
       }
       return touch(project)
     }
+    case 'CHANGE_SCENE': {
+      for (const instrument of ['drums', 'bass', 'synth'] as const) {
+        const block = instrumentBlock(project, instrument)
+        if (!block.patterns[command.patternId]) continue
+        if (project.transport.playing) block.pendingPatternId = command.patternId
+        else {
+          block.activePatternId = command.patternId
+          block.pendingPatternId = null
+        }
+      }
+      return touch(project)
+    }
     case 'COMMIT_PENDING_PATTERNS':
       return commitPending(project, command.pulse)
     case 'SET_STEP': {

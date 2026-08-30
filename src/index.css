@@ -151,11 +151,64 @@ input {
   border-color: #ff3b4a;
 }
 
-input[type='text'].hw-input {
+input[type='text'].hw-input,
+input[type='number'].hw-input {
   background: #0b0d12;
   border: 1px solid rgba(212, 180, 106, 0.16);
   color: #f0e6d0;
   border-radius: 3px;
+}
+
+input[type='number'].hw-input::-webkit-outer-spin-button,
+input[type='number'].hw-input::-webkit-inner-spin-button {
+  opacity: 1;
+}
+
+.tempo-slider {
+  display: block;
+  width: 100%;
+  height: 28px;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.tempo-slider::-webkit-slider-runnable-track {
+  height: 10px;
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, rgba(212, 180, 106, 0.18), rgba(255, 177, 42, 0.45) 55%, rgba(212, 180, 106, 0.2)),
+    #0b0d12;
+  border: 1px solid rgba(212, 180, 106, 0.28);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+.tempo-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  margin-top: -7px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffe08a, #c48a1a 62%, #6a4a10);
+  border: 1px solid #f0d48a;
+  box-shadow: 0 0 10px rgba(255, 177, 42, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.tempo-slider::-moz-range-track {
+  height: 10px;
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, rgba(212, 180, 106, 0.18), rgba(255, 177, 42, 0.45) 55%, rgba(212, 180, 106, 0.2)),
+    #0b0d12;
+  border: 1px solid rgba(212, 180, 106, 0.28);
+}
+
+.tempo-slider::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffe08a, #c48a1a 62%, #6a4a10);
+  border: 1px solid #f0d48a;
 }
 
 .fader-track {

@@ -12,6 +12,22 @@ export function serializeProject(project: Project): string {
   return JSON.stringify(project)
 }
 
+function patternHasHits(project: Project, id: string): boolean {
+  const drums = project.drums.patterns[id]
+  const bass = project.bass.patterns[id]
+  const synth = project.synth.patterns[id]
+  const drumHits = drums ? Object.values(drums.tracks).some((row) => row.some((step) => step.on)) : false
+  const bassHits = bass?.notes.some((step) => step.on) ?? false
+  const synthHits = synth?.notes.some((step) => step.on) ?? false
+  return drumHits || bassHits || synthHits
+}
+
+/** Stock v1 factory only programmed A01. Upgrade those saves to the psytrance bank. */
+export function isStockLegacyFactory(project: Project): boolean {
+  if (project.meta.name !== 'AILEXSI Factory Groove') return false
+  return !patternHasHits(project, 'A02') && !patternHasHits(project, 'A05')
+}
+
 export function migrateProject(raw: unknown): Project {
   if (!raw || typeof raw !== 'object') return createFactoryProject()
   const p = raw as Project
@@ -22,7 +38,9 @@ export function migrateProject(raw: unknown): Project {
     return next
   }
   if (!p.drums?.patterns || !p.bass?.patterns || !p.synth?.patterns) return createFactoryProject()
-  return structuredClone(p)
+  const cloned = structuredClone(p)
+  if (isStockLegacyFactory(cloned)) return createFactoryProject()
+  return cloned
 }
 
 export function parseProject(json: string): Project {

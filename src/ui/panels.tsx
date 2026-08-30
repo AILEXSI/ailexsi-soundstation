@@ -1,6 +1,13 @@
 import { useMemo, useState } from 'react'
-import { DRUM_VOICES } from '../engine/types'
+import {
+  PATTERN_TITLES,
+  TEMPO_DECK_MAX,
+  TEMPO_DECK_MIN,
+  TEMPO_PRESETS,
+} from '../engine/defaults'
+import { DRUM_VOICES, PATTERN_IDS } from '../engine/types'
 import type { DrumVoiceId, Waveform } from '../engine/types'
+import { clamp } from '../engine/music'
 import { Fader, HwButton, Knob, Led, LiveMeter } from './controls'
 import { usePlayhead, useProject, useStation } from './station-context'
 import { DrumRow, MelodicRow, PatternBank } from './steps'
@@ -18,8 +25,6 @@ const WAVES: Waveform[] = ['sawtooth', 'square', 'triangle', 'sine']
 
 export function TransportBar() {
   const station = useStation()
-  const bpm = useProject((p) => p.transport.bpm)
-  const swing = useProject((p) => p.transport.swing)
   const playing = useProject((p) => p.transport.playing)
   const recording = useProject(() => station.recording)
   const ph = usePlayhead()
@@ -31,14 +36,9 @@ export function TransportBar() {
           {playing ? 'Stop' : 'Play'}
         </HwButton>
         <HwButton onClick={() => station.dispatch({ type: 'RESET' })}>Reset</HwButton>
-        <HwButton onClick={() => station.tapTempo()}>Tap</HwButton>
         <HwButton danger active={recording} className={recording ? 'rec' : ''} onClick={() => void station.recordToggle()}>
           Rec
         </HwButton>
-      </div>
-      <div className="flex items-center gap-2">
-        <Knob label="BPM" value={bpm} min={40} max={240} step={1} defaultValue={124} onChange={(v) => station.dispatch({ type: 'SET_TEMPO', bpm: v })} />
-        <Knob label="Swing" value={swing} defaultValue={0.08} onChange={(v) => station.dispatch({ type: 'SET_SWING', swing: v })} />
       </div>
       <div className="flex items-center gap-3">
         <div className="flex gap-1">
@@ -54,6 +54,139 @@ export function TransportBar() {
         {recording && <span className="font-mono text-[10px] tracking-widest text-rec">REC</span>}
       </div>
     </section>
+  )
+}
+
+export function TempoDeck() {
+  const station = useStation()
+  const bpm = useProject((p) => p.transport.bpm)
+  const swing = useProject((p) => p.transport.swing)
+  const sliderValue = clamp(bpm, TEMPO_DECK_MIN, TEMPO_DECK_MAX)
+  const setBpm = (next: number) => station.dispatch({ type: 'SET_TEMPO', bpm: Math.round(next) })
+
+  return (
+    <section className="panel rounded-md px-3 py-3" data-testid="tempo-deck">
+      <header className="mb-2 flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <div className="engraved text-[10px]">Master tempo</div>
+          <div className="font-display text-lg tracking-[0.22em] text-brass">SPEED</div>
+        </div>
+        <p className="font-mono text-[10px] tracking-[0.16em] text-mute">
+          120–150 deck · 1 BPM · clock follows SET_TEMPO
+        </p>
+      </header>
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
+        <div className="min-w-[140px]">
+          <div className="font-display text-6xl leading-none text-amber tabular-nums md:text-7xl">{bpm}</div>
+          <div className="engraved mt-1 text-[11px]">BPM</div>
+        </div>
+        <div className="min-w-0 flex-1">
+          <label className="block">
+            <span className="sr-only">Tempo slider</span>
+            <input
+              type="range"
+              className="tempo-slider"
+              min={TEMPO_DECK_MIN}
+              max={TEMPO_DECK_MAX}
+              step={1}
+              value={sliderValue}
+              aria-label="Tempo"
+              aria-valuemin={TEMPO_DECK_MIN}
+              aria-valuemax={TEMPO_DECK_MAX}
+              aria-valuenow={bpm}
+              onChange={(e) => setBpm(Number(e.target.value))}
+            />
+          </label>
+          <div className="mt-1 flex justify-between font-mono text-[9px] tracking-[0.14em] text-mute">
+            <span>120</span>
+            <span className="text-brass">138</span>
+            <span className="text-amber">140</span>
+            <span className="text-brass">142</span>
+            <span>150</span>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-1.5">
+            <HwButton className="min-w-12 px-3 py-2" onClick={() => setBpm(bpm - 1)}>
+              −1
+            </HwButton>
+            <input
+              type="number"
+              className="hw-input w-[4.5rem] px-2 py-1 text-center font-mono text-sm tabular-nums"
+              min={40}
+              max={240}
+              step={1}
+              value={bpm}
+              aria-label="BPM value"
+              onChange={(e) => {
+                const n = Number(e.target.value)
+                if (Number.isFinite(n)) setBpm(n)
+              }}
+            />
+            <HwButton className="min-w-12 px-3 py-2" onClick={() => setBpm(bpm + 1)}>
+              +1
+            </HwButton>
+            {TEMPO_PRESETS.map((preset) => (
+              <HwButton key={preset} active={bpm === preset} onClick={() => setBpm(preset)}>
+                {preset}
+              </HwButton>
+            ))}
+            <HwButton onClick={() => station.tapTempo()}>Tap</HwButton>
+          </div>
+        </div>
+        <Knob
+          label="Swing"
+          value={swing}
+          defaultValue={0}
+          onChange={(v) => station.dispatch({ type: 'SET_SWING', swing: v })}
+        />
+      </div>
+      <SceneBank />
+    </section>
+  )
+}
+
+function SceneBank() {
+  const station = useStation()
+  const drums = useProject((p) => p.drums.activePatternId)
+  const bass = useProject((p) => p.bass.activePatternId)
+  const synth = useProject((p) => p.synth.activePatternId)
+  const pending = useProject((p) => p.drums.pendingPatternId)
+  const bankA = PATTERN_IDS.filter((id) => id.startsWith('A'))
+  const bankB = PATTERN_IDS.filter((id) => id.startsWith('B'))
+
+  return (
+    <div className="mt-4 border-t border-brass/10 pt-3">
+      <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+        <div className="engraved text-[10px]">Scene · drums + bass + synth</div>
+        <div className="font-mono text-[10px] tracking-[0.16em] text-mist">
+          {PATTERN_TITLES[drums] ?? drums}
+          {drums === bass && drums === synth ? '' : ' · split'}
+        </div>
+      </div>
+      <div className="flex flex-col gap-1.5">
+        {[bankA, bankB].map((bank) => (
+          <div key={bank[0]} className="flex flex-wrap gap-1">
+            {bank.map((id) => {
+              const allOn = drums === id && bass === id && synth === id
+              const queued = pending === id
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  title={PATTERN_TITLES[id]}
+                  onClick={() => station.dispatch({ type: 'CHANGE_SCENE', patternId: id })}
+                  className={`hw-btn min-w-16 px-2 py-1 text-left font-mono text-[10px] ${allOn ? 'active' : ''} ${queued ? 'text-cyan' : ''}`}
+                >
+                  <span className="text-brass">{id}</span>
+                  <span className="ml-1 tracking-normal text-mist/80 normal-case">
+                    {PATTERN_TITLES[id] ?? id}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -121,7 +254,7 @@ export function DrumMachine() {
       <header className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div>
           <div className="font-display text-lg tracking-[0.28em] text-brass">DRUMS</div>
-          <div className="engraved text-[10px]">Six-voice analog engine</div>
+          <div className="engraved text-[10px]">{pattern?.name ?? 'Six-voice analog engine'}</div>
         </div>
         <PatternBank
           order={drums.patternOrder}
@@ -273,7 +406,7 @@ export function BassPanel() {
       <header className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div>
           <div className="font-display text-lg tracking-[0.28em] text-brass">BASS</div>
-          <div className="engraved text-[10px]">Monophonic analog line</div>
+          <div className="engraved text-[10px]">{pattern?.name ?? 'Monophonic analog line'}</div>
         </div>
         <PatternBank
           order={bass.patternOrder}
@@ -407,7 +540,7 @@ export function SynthPanel() {
       <header className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div>
           <div className="font-display text-lg tracking-[0.28em] text-brass">SYNTH</div>
-          <div className="engraved text-[10px]">Dual oscillator · filter · LFO</div>
+          <div className="engraved text-[10px]">{pattern?.name ?? 'Dual oscillator · filter · LFO'}</div>
         </div>
         <PatternBank
           order={synth.patternOrder}

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { PATTERN_TITLES } from '../engine/defaults'
 import { midiName } from '../engine/music'
 import type { DrumStep, DrumVoiceId, MelodicStep } from '../engine/types'
 
@@ -138,6 +139,7 @@ export function PatternBank({
           <button
             key={id}
             type="button"
+            title={PATTERN_TITLES[id] ?? id}
             onClick={() => onSelect(id)}
             className={`hw-btn min-w-10 px-1.5 py-1 font-mono text-[10px] ${isActive ? 'active' : ''} ${isPending ? 'text-cyan' : ''}`}
           >

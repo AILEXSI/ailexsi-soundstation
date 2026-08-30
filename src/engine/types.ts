@@ -230,6 +230,7 @@ export type Command =
   | { type: 'SOLO_CHANNEL'; channel: string }
   | { type: 'UNSOLO_CHANNEL'; channel: string }
   | { type: 'CHANGE_PATTERN'; instrument: InstrumentId; patternId: string }
+  | { type: 'CHANGE_SCENE'; patternId: string }
   | { type: 'COMMIT_PENDING_PATTERNS'; pulse: number }
   | { type: 'CLEAR_PATTERN'; instrument: InstrumentId; patternId: string }
   | { type: 'DUPLICATE_PATTERN'; instrument: InstrumentId; patternId: string }

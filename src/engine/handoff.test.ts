@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { canCommitPattern, midiName, mtof, stepDurationSec, tapTempoBpm } from './music'
-import { parseProject, serializeProject, handoffPayload } from './persist'
-import { createEmptyProject, createFactoryProject } from './defaults'
+import { parseProject, serializeProject, handoffPayload, isStockLegacyFactory } from './persist'
+import { createEmptyProject, createFactoryProject, FACTORY_BPM, PATTERN_TITLES } from './defaults'
 import { reduce } from './reduce'
 import { decodeWav, encodeWav, hasAudibleSignal, peakOf } from './wav'
 import { renderDrumVoice } from './drums'
@@ -45,9 +45,10 @@ describe('music', () => {
 describe('project + commands', () => {
   it('creates a factory groove with tempo, patterns, mixer and fx', () => {
     const p = createFactoryProject()
-    expect(p.transport.bpm).toBe(124)
+    expect(p.transport.bpm).toBe(FACTORY_BPM)
+    expect(p.transport.bpm).toBe(140)
     expect(p.drums.patterns.A01?.tracks.kick[0]?.on).toBe(true)
-    expect(p.bass.patterns.A01?.notes[0]?.on).toBe(true)
+    expect(p.bass.patterns.A01?.notes[1]?.on).toBe(true)
     expect(p.synth.patterns.A01?.notes[0]?.on).toBe(true)
     expect(p.mixer.drums.volume).toBeGreaterThan(0)
     expect(p.fx.delay.mix).toBeGreaterThan(0)
@@ -113,7 +114,7 @@ describe('project + commands', () => {
     const loaded = parseProject(json)
     expect(loaded.transport.bpm).toBe(118)
     expect(loaded.bass.params.cutoff).toBe(0.17)
-    expect(loaded.drums.patterns.A01?.tracks.snare[4]?.on).toBe(true)
+    expect(loaded.drums.patterns.A01?.tracks.clap[4]?.on).toBe(true)
     expect(handoffPayload(loaded).tempo).toBe(118)
   })
 
@@ -128,8 +129,8 @@ describe('sequencer planning', () => {
     const plan = planPerformance(createFactoryProject(), 1)
     expect(plan).toHaveLength(16)
     expect(plan[0]?.drums.some((d) => d.voice === 'kick')).toBe(true)
-    expect(plan[4]?.drums.some((d) => d.voice === 'snare')).toBe(true)
-    expect(plan[0]?.bass?.on).toBe(true)
+    expect(plan[4]?.drums.some((d) => d.voice === 'clap')).toBe(true)
+    expect(plan[1]?.bass?.on).toBe(true)
     expect(plan[0]?.synth?.on).toBe(true)
     expect(plannedHits(plan).length).toBeGreaterThan(10)
   })
@@ -171,6 +172,89 @@ describe('drum engine', () => {
     expect(peakOf(kick)).toBeGreaterThan(0.2)
     expect(peakOf(snare)).toBeGreaterThan(0.1)
     expect(hasAudibleSignal([kick])).toBe(true)
+  })
+})
+
+describe('progressive psytrance bank', () => {
+  it('fills every bank slot with named, distinct music', () => {
+    const p = createFactoryProject()
+    for (const id of Object.keys(PATTERN_TITLES)) {
+      const drums = p.drums.patterns[id]
+      const bass = p.bass.patterns[id]
+      const synth = p.synth.patterns[id]
+      expect(drums?.name).toBe(PATTERN_TITLES[id])
+      expect(bass?.name).toBe(PATTERN_TITLES[id])
+      expect(synth?.name).toBe(PATTERN_TITLES[id])
+      const hits =
+        (drums ? Object.values(drums.tracks).flat().filter((s) => s.on).length : 0) +
+        (bass?.notes.filter((s) => s.on).length ?? 0) +
+        (synth?.notes.filter((s) => s.on).length ?? 0)
+      expect(hits).toBeGreaterThan(2)
+    }
+  })
+
+  it('writes four-on-the-floor, offbeat hats, and a rolling bass pump on A01', () => {
+    const p = createFactoryProject()
+    const drums = p.drums.patterns.A01
+    const bass = p.bass.patterns.A01
+    expect(drums?.tracks.kick[0]?.on).toBe(true)
+    expect(drums?.tracks.kick[4]?.on).toBe(true)
+    expect(drums?.tracks.kick[8]?.on).toBe(true)
+    expect(drums?.tracks.kick[12]?.on).toBe(true)
+    expect(drums?.tracks.oh[2]?.on).toBe(true)
+    expect(drums?.tracks.clap[4]?.on).toBe(true)
+    expect(bass?.notes[0]?.on).toBe(false)
+    expect(bass?.notes[1]?.on).toBe(true)
+    expect(bass?.notes[2]?.on).toBe(true)
+    expect(bass?.notes[3]?.on).toBe(true)
+  })
+
+  it('evolves bass and synth across the A-set instead of copying one loop', () => {
+    const p = createFactoryProject()
+    const sig = (id: string) =>
+      [
+        p.bass.patterns[id]?.notes.filter((n) => n.on).map((n) => `${n.note}:${n.slide ? 1 : 0}`).join(','),
+        p.synth.patterns[id]?.notes.filter((n) => n.on).map((n) => n.note).join(','),
+        p.drums.patterns[id]?.tracks.kick.filter((s) => s.on).length,
+      ].join('|')
+    const a01 = sig('A01')
+    const a02 = sig('A02')
+    const a05 = sig('A05')
+    const a06 = sig('A06')
+    expect(new Set([a01, a02, a05, a06]).size).toBe(4)
+  })
+
+  it('queues a scene change for all three instruments', () => {
+    let p = createFactoryProject()
+    p = reduce(p, { type: 'START' })
+    p = reduce(p, { type: 'CHANGE_SCENE', patternId: 'A05' })
+    expect(p.drums.pendingPatternId).toBe('A05')
+    expect(p.bass.pendingPatternId).toBe('A05')
+    expect(p.synth.pendingPatternId).toBe('A05')
+    p = reduce(p, { type: 'COMMIT_PENDING_PATTERNS', pulse: 0 })
+    expect(p.drums.activePatternId).toBe('A05')
+    expect(p.bass.activePatternId).toBe('A05')
+    expect(p.synth.activePatternId).toBe('A05')
+  })
+
+  it('upgrades a stock legacy factory save to the psytrance bank', () => {
+    const legacy = createEmptyProject('AILEXSI Factory Groove')
+    expect(isStockLegacyFactory(legacy)).toBe(true)
+    const loaded = parseProject(serializeProject(legacy))
+    expect(loaded.meta.name).toBe('AILEXSI Night Drive')
+    expect(loaded.transport.bpm).toBe(140)
+    expect(loaded.drums.patterns.A05?.name).toBe('Peak Sun')
+    expect(loaded.drums.patterns.A05?.tracks.kick[0]?.on).toBe(true)
+  })
+
+  it('nudges tempo in 1 BPM steps through SET_TEMPO', () => {
+    let p = createFactoryProject()
+    expect(p.transport.bpm).toBe(140)
+    p = reduce(p, { type: 'SET_TEMPO', bpm: 141 })
+    expect(p.transport.bpm).toBe(141)
+    expect(stepDurationSec(141, 0, 0)).toBeCloseTo(60 / 141 / 4, 6)
+    p = reduce(p, { type: 'SET_TEMPO', bpm: 138.4 })
+    expect(p.transport.bpm).toBe(138)
   })
 })
 

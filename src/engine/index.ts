@@ -1,6 +1,13 @@
 export { SoundStation, createStation } from './station'
 export { reduce, createInitialProject, createEmptyProject } from './reduce'
-export { createFactoryProject } from './defaults'
+export {
+  createFactoryProject,
+  FACTORY_BPM,
+  PATTERN_TITLES,
+  TEMPO_DECK_MAX,
+  TEMPO_DECK_MIN,
+  TEMPO_PRESETS,
+} from './defaults'
 export { parseProject, serializeProject, handoffPayload, migrateProject } from './persist'
 export { planPerformance, plannedHits } from './scheduler'
 export { planPulses, MasterClock } from './clock'

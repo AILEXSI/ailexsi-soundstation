@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { BassPanel, DrumMachine, MixerFx, PerformanceStrip, RecordSaveBar, SynthPanel, TransportBar } from './ui/panels'
+import { BassPanel, DrumMachine, MixerFx, PerformanceStrip, RecordSaveBar, SynthPanel, TempoDeck, TransportBar } from './ui/panels'
 import { HwButton } from './ui/controls'
 import { StationProvider, useStation } from './ui/station-context'
 
@@ -17,8 +17,9 @@ function Boot() {
         <h1 className="mt-3 font-display text-5xl tracking-[0.28em] text-brass">AILEXSI</h1>
         <div className="mt-1 font-display text-2xl tracking-[0.46em] text-mist">SOUNDSTATION</div>
         <p className="mx-auto mt-6 max-w-md text-sm leading-relaxed text-mist/80">
-          A standalone groove instrument. Arm the engine, press Play, and the factory pattern is already a song.
-          Touch the pads. Sweep the filter. Record the room, not the mouse.
+          A standalone groove instrument. Arm the engine, press Play. Night Drive is already rolling at 140 BPM —
+          four-on-the-floor, trance-pump bass, and a progressive set you can ride. Touch the pads. Ride the tempo.
+          Record the room, not the mouse.
         </p>
         <div className="mt-8 flex flex-col items-center gap-3">
           <HwButton
@@ -139,6 +140,7 @@ function Deck() {
         </header>
         <div className="flex flex-col gap-3">
           <TransportBar />
+          <TempoDeck />
           <PerformanceStrip />
           <div className="grid gap-3 xl:grid-cols-2">
             <DrumMachine />
@@ -160,7 +162,7 @@ function KeysLegend() {
     ['Esc', 'Reset to step 1'],
     ['R', 'Record take'],
     ['T', 'Tap tempo'],
-    ['[ ]', 'Tempo ±1 · Shift ±5'],
+    ['[ ]', 'Tempo ±1 · Shift ±5 · SPEED deck for drag / presets'],
     ['1–8', 'Drums pattern A01–A08'],
     ['Shift+1–8', 'Bass pattern'],
     ['Alt+1–8', 'Synth pattern'],
